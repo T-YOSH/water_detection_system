@@ -20,6 +20,16 @@
 
 #define NUM_OF_PORT 16
 
+// BUZZER
+#define BUZZER_PIN 23       // ブザーを鳴らすためのピン
+#define MAGNET_PIN 12       // 磁石スイッチのHIGHを出力するピン
+#define JUDGE_PIN 14        // 磁石スイッチの判断をするピン
+
+#define BEAT 150            // 一つの音を鳴らす時間
+#define LEDC_CHANNEL 0      // チャンネル
+#define LEDC_TIMER_BIT 13
+#define LEDC_BASE_FREQ 5000
+
 void datasend(int,int,int *,int);
 void dataread(int,int,int *,int);
 
@@ -27,13 +37,20 @@ void setup()
 {
   Serial.begin(115200); 
   Wire.begin(21,22);
+
+  // BUZZER
+  ledcSetup(LEDC_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_BIT);
+  ledcAttachPin(BUZZER_PIN, LEDC_CHANNEL);
+  
 }
 
 void loop()
 {
+  boolean isWaterDetect = false;
+  String strDetectedSensors = "Sensor : "; 
 
   int port_input[2]; //入力状態を取得する変数
-  dataread(PCAL9555APW_ADDR, INPUT_REG, port_input, 2);
+  dataread(PCAL9555APW_ADDR, INPUT_REG, port_input, 2);  
   Serial.print("port0:");
   Serial.println(port_input[0], BIN);
   for(int i =0; i < (NUM_OF_PORT/2) ; i++){
@@ -42,6 +59,10 @@ void loop()
     Serial.print(i);
     Serial.print(" value : ");
     Serial.println(value);
+    if(value==0){
+      isWaterDetect=true;
+      strDetectedSensors = strDetectedSensors + String(i) + String(",");
+    }
   }
   Serial.print("\tport1:");
   Serial.println(port_input[1], BIN);
@@ -51,9 +72,26 @@ void loop()
     Serial.print(i+8);
     Serial.print(" value : ");
     Serial.println(value);
+    if(value==0){
+      isWaterDetect=true;
+      strDetectedSensors = strDetectedSensors + String(i+8) + String(",");
+    }
   }
 
-  
+  // show message to the LCD
+  if(isWaterDetect){
+    Serial.println("WARNING");
+    Serial.println(strDetectedSensors);
+    // buzzer start
+    callZeldaSound();   // ゼルダの謎解き音を鳴らす
+     
+  }else{
+    Serial.println("No Problem");
+    Serial.println(strDetectedSensors);
+  }
+
+
+
   delay(500);
 }
 
@@ -80,3 +118,27 @@ void dataread(int id,int reg,int *data,int datasize)
   }
   Wire.endTransmission(true);
 }
+
+/**
+ * ゼルダの謎解き音
+ */
+void callZeldaSound() {
+  ledcWriteTone(LEDC_CHANNEL, 3136); // ソ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 2960); // ♯ファ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 2489); // ♯レ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 1760); // ラ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 1661); // ♯ソ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 2637); // ミ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 3322); // ♯ソ
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 4186); // ド
+  delay(BEAT);
+  ledcWriteTone(LEDC_CHANNEL, 0);    // 音を止める
+}      
+
