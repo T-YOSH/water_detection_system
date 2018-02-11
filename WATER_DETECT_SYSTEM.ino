@@ -24,7 +24,7 @@
 // BUZZER
 #define BUZZER_PIN 23       // ブザーを鳴らすためのピン
 #define MAGNET_PIN 12       // 磁石スイッチのHIGHを出力するピン
-#define JUDGE_PIN 14        // 磁石スイッチの判断をするピン
+#define JUDGE_PIN 34         // 磁石スイッチの判断をするピン
 
 #define BEAT 150            // 一つの音を鳴らす時間
 #define LEDC_CHANNEL 0      // チャンネル
@@ -42,6 +42,7 @@ void setup()
 {
   Serial.begin(115200); 
   Wire.begin(21,22);
+  Wire.setClock(10000);
 
   // BUZZER
   ledcSetup(LEDC_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_BIT);
@@ -126,7 +127,8 @@ void loop()
         lcd.noAutoscroll();
         lcd.noDisplay();
         lcd.setCursor(0, 1);
-        lcd.print("                                ");
+        lcd.print("                                ");　　　　　　　　
+
         for (int thisChar = 0; thisChar < (strDetectedSensors.length()-8); thisChar++) {
            lcd.scrollDisplayRight();
         }
@@ -144,8 +146,7 @@ void loop()
     ///////////
     // buzzer start
     ///////////
-    callZeldaSound();   // ゼルダの謎解き音を鳴らす
-
+    callBuzerSound();
   }else{
     lcd.clear();
     Serial.println("No Problem");
@@ -161,7 +162,6 @@ void loop()
     }
     isLcdOn = !isLcdOn;
   }
-
   delay(500);
 }
 
@@ -189,26 +189,16 @@ void dataread(int id,int reg,int *data,int datasize)
   Wire.endTransmission(true);
 }
 
-/**
- * ゼルダの謎解き音
+ /**
+ * ブザー音
  */
-void callZeldaSound() {
+void callBuzerSound() {
   ledcWriteTone(LEDC_CHANNEL, 3136); // ソ
   delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 2960); // ♯ファ
+  ledcWriteTone(LEDC_CHANNEL, 2489); // ソ
   delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 2489); // ♯レ
+  ledcWriteTone(LEDC_CHANNEL, 3136); // ソ
   delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 1760); // ラ
-  delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 1661); // ♯ソ
-  delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 2637); // ミ
-  delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 3322); // ♯ソ
-  delay(BEAT);
-  ledcWriteTone(LEDC_CHANNEL, 4186); // ド
   delay(BEAT);
   ledcWriteTone(LEDC_CHANNEL, 0);    // 音を止める
-}      
-
+}
