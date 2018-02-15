@@ -42,6 +42,14 @@ bool isLcdOn = false;
 void datasend(int,int,int *,int);
 void dataread(int,int,int *,int);
 
+const int wdtTimeout = 5000;  //time in ms to trigger the watchdog
+hw_timer_t *timer = NULL;
+
+void IRAM_ATTR resetModule() {
+  ets_printf("reboot\n");
+  esp_restart_noos();
+}
+
 void setup()
 {
   Serial.begin(115200); 
@@ -63,6 +71,13 @@ void setup()
   Wire.write(0xFF);
   Wire.write(0xFE);
   Wire.endTransmission();
+
+  // WATCH DOG TIMER
+  timer = timerBegin(0, 80, true);                  //timer 0, div 80
+  timerAttachInterrupt(timer, &resetModule, true);  //attach callback
+  timerAlarmWrite(timer, wdtTimeout * 1000, false); //set time in us
+  timerAlarmEnable(timer);                          //enable interrupt
+  
 }
 
 void loop()
@@ -195,6 +210,7 @@ void loop()
     datasend(PCAL9555APW_ADDR, OUTPUT_REG, port_output, 2);  
 
   }
+  timerWrite(timer, 0); //reset timer (feed watchdog)
   delay(1000);
 }
 
