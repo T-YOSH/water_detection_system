@@ -31,6 +31,10 @@
 #define LEDC_TIMER_BIT 13
 #define LEDC_BASE_FREQ 5000
 
+//OUTPUT GPIO
+#define OUTPUT_GPIO_NUMBER 8
+
+
 //LCD
 ST7032 lcd;
 bool isLcdOn = false;
@@ -53,6 +57,12 @@ void setup()
   lcd.setContrast(30);            // コントラスト設定
   lcd.clear();
 
+  // setup for OUTPUT GPIO
+  Wire.beginTransmission(PCAL9555APW_ADDR);
+  Wire.write(CONFIG_REG);
+  Wire.write(0xFF);
+  Wire.write(0xFE);
+  Wire.endTransmission();
 }
 
 void loop()
@@ -84,8 +94,10 @@ void loop()
     Serial.print(" value : ");
     Serial.println(value);
     if(value==0){
-      isWaterDetect=true;
-      strDetectedSensors = strDetectedSensors + String(".") + String(i+8);
+      if( (i+8) != OUTPUT_GPIO_NUMBER){
+        isWaterDetect=true;
+        strDetectedSensors = strDetectedSensors + String(".") + String(i+8);
+      }
     }
   }
 
@@ -127,7 +139,7 @@ void loop()
         lcd.noAutoscroll();
         lcd.noDisplay();
         lcd.setCursor(0, 1);
-        lcd.print("                                ");　　　　　　　　
+        lcd.print("");
 
         for (int thisChar = 0; thisChar < (strDetectedSensors.length()-8); thisChar++) {
            lcd.scrollDisplayRight();
@@ -147,6 +159,21 @@ void loop()
     // buzzer start
     ///////////
     callBuzerSound();
+
+    //別ラインのブザースイッチをオンにする。
+    static int buzzerCountDown =3;
+    buzzerCountDown--;
+    if( (buzzerCountDown%3)==0){
+      Serial.println("set gpio ON");
+      int port_output[2] = {0x00, 0x00}; //入力状態を取得する変数
+      datasend(PCAL9555APW_ADDR, OUTPUT_REG, port_output, 2);  
+      buzzerCountDown=3;
+    }else{
+      Serial.println("NOT set gpio ON");
+      int port_output[2] = {0x00, 0x01}; //入力状態を取得する変数
+      datasend(PCAL9555APW_ADDR, OUTPUT_REG, port_output, 2);  
+    }
+   
   }else{
     lcd.clear();
     Serial.println("No Problem");
@@ -161,8 +188,14 @@ void loop()
       lcd.print("Monitor");
     }
     isLcdOn = !isLcdOn;
+
+    //別ラインのブザースイッチをオフにする。
+    Serial.println("set gpio OFF");
+    int port_output[2] = {0x00, 0x01}; //入力状態を取得する変数
+    datasend(PCAL9555APW_ADDR, OUTPUT_REG, port_output, 2);  
+
   }
-  delay(500);
+  delay(1000);
 }
 
 void datasend(int id,int reg,int *data,int datasize)
