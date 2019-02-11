@@ -47,7 +47,7 @@ hw_timer_t *timer = NULL;
 
 void IRAM_ATTR resetModule() {
   ets_printf("reboot\n");
-  esp_restart_noos();
+  esp_restart();
 }
 
 void setup()
@@ -222,7 +222,7 @@ void datasend(int id,int reg,int *data,int datasize)
   {
     Wire.write(data[i]);
   }
-  Wire.endTransmission();
+  Wire.endTransmission(true);
 }
 
 void dataread(int id,int reg,int *data,int datasize)
@@ -230,7 +230,7 @@ void dataread(int id,int reg,int *data,int datasize)
   Wire.beginTransmission(id);
   Wire.write(reg);
   Wire.endTransmission(false);
-  Wire.requestFrom(id, datasize, false);
+  Wire.requestFrom(id, datasize,true);
   for(int i=0;i<datasize;i++)
   {
     data[i] = Wire.read();
