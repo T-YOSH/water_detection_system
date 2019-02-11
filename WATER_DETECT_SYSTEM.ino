@@ -34,10 +34,12 @@
 //OUTPUT GPIO
 #define OUTPUT_GPIO_NUMBER 8
 
-
 //LCD
 ST7032 lcd;
 bool isLcdOn = false;
+
+//auto reboot counter
+int rebootCountDown = 86400; // 24hour = 24 x 60 x 60
 
 void datasend(int,int,int *,int);
 void dataread(int,int,int *,int);
@@ -212,10 +214,17 @@ void loop()
   }
   timerWrite(timer, 0); //reset timer (feed watchdog)
   delay(1000);
+  rebootCountDown--;
+  Serial.print("REBOOT COUNT DOWN ");
+  Serial.println(rebootCountDown);
+  if(rebootCountDown < 0){
+    resetModule();
+  }
 }
 
 void datasend(int id,int reg,int *data,int datasize)
 {
+  Serial.println("DATA SEND");
   Wire.beginTransmission(id);
   Wire.write(reg);
   for(int i=0;i<datasize;i++)
@@ -227,6 +236,7 @@ void datasend(int id,int reg,int *data,int datasize)
 
 void dataread(int id,int reg,int *data,int datasize)
 {
+  Serial.println("DATA READ");
   Wire.beginTransmission(id);
   Wire.write(reg);
   Wire.endTransmission(false);
@@ -234,6 +244,10 @@ void dataread(int id,int reg,int *data,int datasize)
   for(int i=0;i<datasize;i++)
   {
     data[i] = Wire.read();
+    Serial.print("DATA ");
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.println(data[i]);
   }
   Wire.endTransmission(true);
 }
